@@ -1,0 +1,10 @@
+github.com/aws/aws-sdk-go v1.25.25 h1:j3HLOqcDWjNox1DyvJRs+kVQF42Ghtv6oL6cVBfXS3U=
+github.com/aws/aws-sdk-go v1.25.25/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
+github.com/benmcclelland/s3v2 v0.0.0-20161104205137-a9e171a3e5d2 h1:YXUunzs3LbT9CTRBJeGfnhQpKMMRxvBPhtqrSXuXlEM=
+github.com/benmcclelland/s3v2 v0.0.0-20161104205137-a9e171a3e5d2/go.mod h1:MJmmDtEqoSaNbWgJ67/wG9qZWpjuDg/n6qWA0ZDnRKU=
+github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
+github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
+github.com/mitchellh/goamz v0.0.0-20150317174335-caaaea8b30ee h1:Wp4ixY2/QEZOrQrGMF1h1x4yxqsef+aQPse0XMXzZhs=
+github.com/mitchellh/goamz v0.0.0-20150317174335-caaaea8b30ee/go.mod h1:svb8iUupD5i7RyGXoCUrk3EQSaXjWxKuqiZ0j41Jmm8=
+github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec h1:DGmKwyZwEB8dI7tbLt/I/gQuP559o/0FrAkHKlQM/Ks=
+github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec/go.mod h1:owBmyHYMLkxyrugmfwE/DLJyW8Ro9mkphwuVErQ0iUw=
