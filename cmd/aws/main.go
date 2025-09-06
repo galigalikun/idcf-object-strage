@@ -6,67 +6,78 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go"
 )
 
-func main() {
-	ctx := context.Background()
-	var apiKey, secretKey, bucket, key string
-	var timeout time.Duration
+var (
+	apiKey    = flag.String("a", "", "api key.")
+	secretKey = flag.String("s", "", "secret key.")
+	timeout   = flag.Duration("d", 0, "Upload timeout.")
+	bucket    = flag.String("b", "", "Bucket name.")
+	key       = flag.String("k", "", "Object key name.")
+)
 
-	flag.StringVar(&apiKey, "a", "", "api key.")
-	flag.StringVar(&secretKey, "s", "", "secret key.")
-	flag.StringVar(&bucket, "b", "", "Bucket name.")
-	flag.StringVar(&key, "k", "", "Object key name.")
-	flag.DurationVar(&timeout, "d", 0, "Upload timeout.")
+func init() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s -a API_KEY -s SECRET_KEY -b BUCKET -k KEY [-d DURATION] < FILE\n", os.Args[0])
+		flag.PrintDefaults()
+	}
 	flag.Parse()
+}
+
+func run() error {
+	ctx := context.Background()
 
 	cre := credentials.NewStaticCredentialsProvider(
-		apiKey,
-		secretKey,
+		*apiKey,
+		*secretKey,
 		"")
 
 	cfg, err := config.LoadDefaultConfig(
 		ctx,
 		config.WithCredentialsProvider(cre),
+		config.WithBaseEndpoint("ds.jp-east.idcfcloud.com"),
 		config.WithRegion("us-west-2"),
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to load configuration, %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.UsePathStyle = true
-		o.BaseEndpoint = aws.String("ds.jp-east.idcfcloud.com")
-		o.Region = "us-west-2"
 	})
 
 	var cancelFn func()
-	if timeout > 0 {
-		ctx, cancelFn = context.WithTimeout(ctx, timeout)
+	if *timeout > 0 {
+		ctx, cancelFn = context.WithTimeout(ctx, *timeout)
+		defer cancelFn()
 	}
-	defer cancelFn()
 
 	if _, err := svc.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
+		Bucket: bucket,
+		Key:    key,
 		Body:   os.Stdin,
 	}); err != nil {
 		var apiErr smithy.APIError
 		if errors.As(err, &apiErr) {
 			code := apiErr.ErrorCode()
 			message := apiErr.ErrorMessage()
-			fmt.Fprintf(os.Stderr, "unexpected API error, code: %s, message: %s\n", code, message)
+			return fmt.Errorf("unexpected API error, code: %s, message: %s", code, message)
 		}
-		os.Exit(1)
+		return err
 	}
 
-	fmt.Printf("successfully uploaded file to %s/%s\n", bucket, key)
+	return nil
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("successfully uploaded file to %s/%s\n", *bucket, *key)
 }
