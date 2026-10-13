@@ -33,7 +33,7 @@ func main() {
 	bucket := s.Bucket("alice")
 
 	data := []byte("hoge")
-	err = bucket.Put("sample.txt", data, "text/plain", s3.PublicRead)
+	err = bucket.Put("sample.txt", data, "text/plain", s3.Private)
 	if err != nil {
 		fmt.Printf("put err:%v", err)
 	}

@@ -23,33 +23,42 @@ var (
 
 func init() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s -a API_KEY -s SECRET_KEY -b BUCKET -k KEY [-d DURATION] < FILE\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s -b BUCKET -k KEY [-d DURATION] < FILE\nCredentials: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY or an AWS profile; -a / -s override them.\n", os.Args[0])
 		flag.PrintDefaults()
 	}
-	flag.Parse()
+}
+
+func newS3Client(ctx context.Context, accessKey, secret string) (*s3.Client, error) {
+	if (accessKey == "") != (secret == "") {
+		return nil, errors.New("both -a and -s must be provided together")
+	}
+
+	opts := []func(*config.LoadOptions) error{
+		config.WithBaseEndpoint("https://ds.jp-east.idcfcloud.com"),
+		config.WithRegion("us-west-2"),
+	}
+	if accessKey != "" {
+		opts = append(opts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(accessKey, secret, "")))
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = true
+	}), nil
 }
 
 func run() error {
 	ctx := context.Background()
 
-	cre := credentials.NewStaticCredentialsProvider(
-		*apiKey,
-		*secretKey,
-		"")
-
-	cfg, err := config.LoadDefaultConfig(
-		ctx,
-		config.WithCredentialsProvider(cre),
-		config.WithBaseEndpoint("ds.jp-east.idcfcloud.com"),
-		config.WithRegion("us-west-2"),
-	)
+	svc, err := newS3Client(ctx, *apiKey, *secretKey)
 	if err != nil {
 		return err
 	}
-
-	svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.UsePathStyle = true
-	})
 
 	var cancelFn func()
 	if *timeout > 0 {
@@ -75,6 +84,7 @@ func run() error {
 }
 
 func main() {
+	flag.Parse()
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
